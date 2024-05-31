@@ -69,7 +69,7 @@ impl From<anyhow::Error> for Error {
 ///
 /// Could fail if there is I/O or Chrome headless issue
 pub fn run(opt: &Options) -> Result<(), Error> {
-    let input = dunce::canonicalize(opt.input())?;
+    let input = opt.input().to_string_lossy();
     let output = if let Some(path) = opt.output() {
         path.clone()
     } else {
@@ -78,7 +78,7 @@ pub fn run(opt: &Options) -> Result<(), Error> {
         path
     };
 
-    html_to_pdf(input, output, opt.into(), opt.into(), opt.wait())?;
+    html_to_pdf(&input, output, opt.into(), opt.into(), opt.wait())?;
 
     Ok(())
 }
@@ -91,24 +91,21 @@ pub fn run(opt: &Options) -> Result<(), Error> {
 /// # Errors
 ///
 /// Could fail if there is I/O or Chrome headless issue
-pub fn html_to_pdf<I, O>(
-    input: I,
+pub fn html_to_pdf<O>(
+    input: &str,
     output: O,
     pdf_options: PrintToPdfOptions,
     launch_options: LaunchOptions,
     wait: Option<Duration>,
 ) -> Result<(), Error>
 where
-    I: AsRef<Path> + Debug,
     O: AsRef<Path> + Debug,
 {
-    let os = input
-        .as_ref()
-        .as_os_str()
-        .to_str()
-        .ok_or_else(|| io::Error::from(ErrorKind::InvalidInput))?;
-    let input = format!("file://{os}");
-    info!("Input file: {input}");
+    let input = if input.starts_with("http") {
+        input.to_string()
+    } else {
+        format!("file://{input}")
+    };
 
     let local_pdf = print_to_pdf(&input, pdf_options, launch_options, wait)?;
 
