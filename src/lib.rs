@@ -1,13 +1,11 @@
 #![forbid(unsafe_code)]
 #![warn(clippy::perf)]
-// #![warn(clippy::nursery)]
 #![warn(clippy::pedantic)]
 #![warn(missing_docs)]
 #![allow(clippy::module_name_repetitions)]
 #![doc = include_str!("../README.md")]
 
 use std::fmt::Debug;
-use std::io::ErrorKind;
 use std::num::ParseFloatError;
 use std::path::Path;
 use std::thread::sleep;
@@ -15,8 +13,9 @@ use std::time::Duration;
 use std::{fs, io};
 
 use anyhow::Result;
-use headless_chrome::types::PrintToPdfOptions;
-use headless_chrome::{Browser, LaunchOptions};
+pub use headless_chrome::types::PrintToPdfOptions;
+use headless_chrome::Browser;
+pub use headless_chrome::LaunchOptions;
 use humantime::format_duration;
 use log::{debug, info};
 use thiserror::Error;
