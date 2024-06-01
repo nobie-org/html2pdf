@@ -78,7 +78,7 @@ pub fn run(opt: &Options) -> Result<(), Error> {
         path
     };
 
-    html_to_pdf(&input, output, opt.into(), opt.into(), opt.wait())?;
+    html_to_pdf_to_file(&input, output, opt.into(), opt.into(), opt.wait())?;
 
     Ok(())
 }
@@ -91,7 +91,7 @@ pub fn run(opt: &Options) -> Result<(), Error> {
 /// # Errors
 ///
 /// Could fail if there is I/O or Chrome headless issue
-pub fn html_to_pdf<O>(
+pub fn html_to_pdf_to_file<O>(
     input: &str,
     output: O,
     pdf_options: PrintToPdfOptions,
@@ -101,18 +101,34 @@ pub fn html_to_pdf<O>(
 where
     O: AsRef<Path> + Debug,
 {
+    let local_pdf = html_to_pdf(input, pdf_options, launch_options, wait)?;
+
+    fs::write(output.as_ref(), local_pdf)?;
+
+    Ok(())
+}
+
+/// Run HTML to PDF with `headless_chrome` returning the PDF as bytes
+///
+/// # Panics
+/// Sorry, no error handling, just panic
+///
+/// # Errors
+///
+/// Could fail if there is I/O or Chrome headless issue
+pub fn html_to_pdf(
+    input: &str,
+    pdf_options: PrintToPdfOptions,
+    launch_options: LaunchOptions,
+    wait: Option<Duration>,
+) -> Result<Vec<u8>, Error> {
     let input = if input.starts_with("http") {
         input.to_string()
     } else {
         format!("file://{input}")
     };
 
-    let local_pdf = print_to_pdf(&input, pdf_options, launch_options, wait)?;
-
-    info!("Output file: {:?}", output.as_ref());
-    fs::write(output.as_ref(), local_pdf)?;
-
-    Ok(())
+    Ok(print_to_pdf(&input, pdf_options, launch_options, wait)?)
 }
 
 fn print_to_pdf(
